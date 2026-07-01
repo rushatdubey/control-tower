@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Supply Chain Control Tower: Executive Decision Support</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700;9..144,800;9..144,900&family=Spline+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ============ LIGHT SAAS SYSTEM (operations blue) ============ */
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --surface2:#fbfcfd; --sidebar:#ffffff;
+  --line:#e9edf2; --line2:#dde3ea; --line3:#eef1f5;
+  --txt:#0f1b2a; --txt2:#5a6a7d; --faint:#94a2b3;
+  --accent:#1d4ed8; --accent2:#2563eb; --accent-soft:#eef3ff; --accent-softer:#f5f8ff;
+  --green:#0f9d58; --green-soft:#e7f6ee; --amber:#c47d1a; --amber-soft:#fbf1e0;
+  --red:#d64545; --red-soft:#fbeaea; --cyan:#0891b2; --violet:#7c5cc4;
+  --dc1:#1d4ed8; --dc2:#0891b2; --dc3:#d64545; --dc4:#c47d1a; --dc5:#7c5cc4; --dc6:#0f9d58;
+  --shadow-sm:0 1px 2px rgba(15,27,42,.04);
+  --shadow:0 1px 3px rgba(15,27,42,.06), 0 1px 2px rgba(15,27,42,.04);
+  --shadow-md:0 4px 16px -6px rgba(15,27,42,.12), 0 2px 6px -2px rgba(15,27,42,.06);
+  --shadow-lg:0 12px 32px -12px rgba(15,27,42,.18);
+  --r:12px; --r-sm:9px; --r-lg:16px;
+  --sidebar-w:246px; --topbar-h:60px;
+}
+body.dark{
+  --bg:#0b0f14; --surface:#121820; --surface2:#0f151c; --sidebar:#0e141b;
+  --line:#1e2732; --line2:#2a3441; --line3:#161d26;
+  --txt:#e8eef5; --txt2:#93a3b6; --faint:#5d6f84;
+  --accent:#3b82f6; --accent2:#60a5fa; --accent-soft:#152238; --accent-softer:#111b2c;
+  --green:#34d17e; --green-soft:#12241a; --amber:#e0a94e; --amber-soft:#2a2113; --red:#e0795f; --red-soft:#2a1613;
+  --cyan:#22d3ee; --violet:#a78bfa;
+  --dc1:#3b82f6; --dc2:#22d3ee; --dc3:#e0795f; --dc4:#e0a94e; --dc5:#a78bfa; --dc6:#34d17e;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:0 6px 20px -8px rgba(0,0,0,.6);
+  --shadow-lg:0 16px 38px -14px rgba(0,0,0,.7);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Spline Sans',sans-serif;color:var(--txt);background:var(--bg);
+  -webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5;overflow:hidden}
+.sora{font-family:'Fraunces',serif}
+.mono{font-family:'JetBrains Mono',monospace}
+::selection{background:var(--accent-soft);color:var(--accent)}
+
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-420px 0}100%{background-position:420px 0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ============ APP LAYOUT ============ */
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;height:100vh;overflow:hidden}
+.sidebar{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+.sidebar::-webkit-scrollbar{width:6px}.sidebar::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+.sb-brand{display:flex;align-items:center;gap:11px;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--sidebar);z-index:5}
+.sb-mark{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px -4px var(--accent)}
+.sb-mark svg{width:18px;height:18px}
+.sb-brand-txt{display:flex;flex-direction:column;line-height:1;min-width:0}
+.sb-kick{font-family:'JetBrains Mono';font-size:8px;letter-spacing:1.5px;color:var(--faint);margin-bottom:3px}
+.sb-name{font-family:'Fraunces';font-weight:700;font-size:16px;letter-spacing:-.4px;white-space:nowrap}
+.sb-name span{color:var(--accent)}
+.sb-nav{padding:14px 12px;flex:1}
+.sb-group{margin-bottom:20px}
+.sb-group-t{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);padding:0 10px 8px}
+.sb-item{display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:8px;cursor:pointer;color:var(--txt2);font-size:13.5px;font-weight:500;transition:all .14s;border:none;background:none;width:100%;text-align:left;font-family:'Spline Sans';position:relative}
+.sb-item:hover{background:var(--line3);color:var(--txt)}
+.sb-item.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.sb-item.on::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--accent);border-radius:0 3px 3px 0}
+.sb-ic{width:17px;height:17px;flex-shrink:0;opacity:.85}
+.sb-item.on .sb-ic{opacity:1}
+.sb-badge{margin-left:auto;font-family:'JetBrains Mono';font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--red-soft);color:var(--red)}
+.sb-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--faint);line-height:1.5}
+.sb-foot a{color:var(--txt2);text-decoration:none}.sb-foot a:hover{color:var(--accent)}
+.sb-foot .n{font-family:'Fraunces';font-weight:600;font-size:12.5px;color:var(--txt);margin-bottom:2px}
+
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{height:var(--topbar-h);border-bottom:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:16px;padding:0 24px;flex-shrink:0;z-index:4}
+.tb-crumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--txt2)}
+.tb-crumb .c-root{color:var(--faint)}.tb-crumb .c-sep{color:var(--faint)}.tb-crumb .c-cur{color:var(--txt);font-weight:600}
+.tb-search{margin-left:8px;flex:1;max-width:340px;position:relative}
+.tb-search input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:9px;padding:8px 12px 8px 34px;font-size:13px;color:var(--txt);font-family:'Spline Sans';transition:border-color .15s,box-shadow .15s}
+.tb-search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tb-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--faint)}
+.tb-search .kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono';font-size:10px;color:var(--faint);border:1px solid var(--line2);border-radius:5px;padding:2px 6px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-status{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono';font-size:11px;color:var(--txt2);padding:6px 11px;border:1px solid var(--line2);border-radius:20px}
+.tb-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-soft);animation:pulse 2.4s infinite}
+.tb-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt2);transition:all .15s;position:relative}
+.tb-btn:hover{color:var(--txt);border-color:var(--accent)}
+.tb-btn svg{width:16px;height:16px}
+.tb-btn .notif{position:absolute;top:-3px;right:-3px;width:15px;height:15px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';border:2px solid var(--surface)}
+
+.content{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;padding:26px 30px 60px}
+.content::-webkit-scrollbar{width:9px}.content::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+.content::-webkit-scrollbar-thumb:hover{background:var(--faint)}
+.view{display:none}
+.view.on{display:block;animation:fade .4s ease both}
+.wrap{max-width:1280px;margin:0 auto}
+
+.vhead{margin-bottom:24px}
+.vhead-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:6px}
+.vhead h1{font-family:'Fraunces';font-weight:700;font-size:30px;letter-spacing:-1.2px;line-height:1.1}
+.vhead .vtag{font-family:'JetBrains Mono';font-size:10.5px;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:20px;font-weight:600;white-space:nowrap}
+.vhead p{font-size:14px;color:var(--txt2);max-width:80ch;line-height:1.6}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);transition:box-shadow .2s,border-color .2s}
+.card:hover{box-shadow:var(--shadow)}
+.card-p{padding:20px}
+.card-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
+.card-h h3{font-family:'Fraunces';font-weight:600;font-size:15px;letter-spacing:-.3px}
+.card-cap{font-size:11.5px;color:var(--faint);margin-bottom:16px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.cbox{position:relative;height:250px}.cbox.tall{height:300px}.cbox.sm{height:200px}
+.cbox.loading::after{content:'';position:absolute;inset:0;border-radius:8px;background:linear-gradient(90deg,transparent,var(--line),transparent);background-size:840px 100%;animation:shimmer 1.2s infinite;opacity:.6}
+.cbox.loading canvas{opacity:0}.cbox canvas{transition:opacity .4s}
+
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.kpi:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc,var(--accent))}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kpi-ic{width:30px;height:30px;border-radius:8px;background:var(--kc-soft,var(--accent-soft));display:flex;align-items:center;justify-content:center;color:var(--kc,var(--accent))}
+.kpi-ic svg{width:15px;height:15px}
+.kpi-trend{font-family:'JetBrains Mono';font-size:10.5px;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.kpi-trend.up{color:var(--green)}.kpi-trend.dn{color:var(--red)}.kpi-trend.flat{color:var(--faint)}
+.kpi .v{font-family:'Fraunces';font-weight:700;font-size:29px;letter-spacing:-1.2px;line-height:1;color:var(--kc,var(--txt));font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:15px;color:var(--txt2)}
+.kpi .k{font-size:12px;color:var(--txt2);margin-top:7px;font-weight:500}
+.kpi .sub{font-size:10.5px;color:var(--faint);margin-top:2px;font-family:'JetBrains Mono'}
+
+.insight{background:var(--accent-softer);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--r);padding:18px 22px;margin-bottom:20px}
+.insight .il{font-family:'JetBrains Mono';font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;font-weight:600}
+.insight p{font-size:14.5px;line-height:1.62;color:var(--txt)}
+.insight p b{color:var(--accent);font-weight:600}
+
+.brief-hero{text-align:center;padding:30px 0 40px;position:relative}
+.brief-status{display:inline-flex;align-items:center;gap:13px;flex-wrap:wrap;justify-content:center;padding:8px 16px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm);margin-bottom:26px;font-family:'JetBrains Mono';font-size:11px;color:var(--txt2)}
+.bs-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.bs-item.amber{color:var(--amber)}
+.bs-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-soft);animation:pulse 2.4s infinite}
+.bs-sep{width:1px;height:11px;background:var(--line2)}
+.brief-kick{font-family:'JetBrains Mono';font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.brief-hero h1{font-family:'Fraunces';font-weight:700;font-size:60px;line-height:1.05;letter-spacing:-2.5px;max-width:19ch;margin:0 auto 24px}
+.brief-hero h1 em{font-style:italic;color:var(--accent)}
+.brief-hero .lead{font-size:19px;line-height:1.55;color:var(--txt2);max-width:56ch;margin:0 auto 30px}
+.brief-hero .lead b{color:var(--txt);font-weight:600}
+.brief-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{font-family:'Spline Sans';font-weight:600;font-size:14px;padding:12px 24px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:all .16s}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 8px 20px -8px var(--accent)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 26px -8px var(--accent)}
+.btn-ghost{background:var(--surface);color:var(--txt);border-color:var(--line2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+.chapter{padding:44px 0;border-top:1px solid var(--line)}
+.chapter-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+.chapter-grid.rev .cg-text{order:2}
+.ch-no{font-family:'JetBrains Mono';font-size:11px;letter-spacing:2px;color:var(--accent);margin-bottom:14px}
+.chapter h2{font-family:'Fraunces';font-weight:700;font-size:36px;line-height:1.08;letter-spacing:-1.4px;margin-bottom:18px}
+.chapter h2 em{font-style:italic;color:var(--accent)}
+.chapter .ch-body{font-size:16px;line-height:1.62;color:var(--txt2);margin-bottom:24px;max-width:54ch}
+.chapter .ch-body b{color:var(--txt);font-weight:600}
+.mrow{display:flex;gap:12px;flex-wrap:wrap}
+.mpill{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 17px;min-width:112px;box-shadow:var(--shadow-sm)}
+.mpill .mv{font-family:'Fraunces';font-weight:700;font-size:26px;letter-spacing:-1px;line-height:1;color:var(--accent)}
+.mpill .mv small{font-size:13px;color:var(--txt2)}
+.mpill .mk{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.4px;color:var(--faint);margin-top:7px;text-transform:uppercase}
+.ch-chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow-sm)}
+.ch-chart .cc-cap{font-family:'JetBrains Mono';font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+.pullq{padding:56px 0;border-top:1px solid var(--line);text-align:center}
+.pullq p{font-family:'Fraunces';font-weight:600;font-size:34px;line-height:1.14;letter-spacing:-1.2px;max-width:22ch;margin:0 auto;color:var(--txt)}
+.pullq p em{font-style:italic;color:var(--accent)}
+
+.exp-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
+.exp-list{display:flex;flex-direction:column;gap:8px}
+.erow{display:flex;align-items:center;gap:13px;padding:12px 15px;border-radius:10px;background:var(--surface);border:1px solid var(--line);cursor:pointer;transition:all .16s;position:relative;overflow:hidden}
+.erow:hover{border-color:var(--line2);box-shadow:var(--shadow-sm)}
+.erow.sel{border-color:var(--accent);background:var(--accent-softer)}
+.erow .pos{font-family:'Fraunces';font-weight:700;font-size:16px;width:22px;color:var(--faint)}
+.erow.sel .pos{color:var(--accent)}
+.erow .ch{flex:1}.erow .ch .nm{font-family:'Fraunces';font-weight:600;font-size:14.5px}
+.erow .ch .sub{font-size:10.5px;color:var(--faint);font-family:'JetBrains Mono';margin-top:1px}
+.erow .amt{font-family:'JetBrains Mono';font-weight:600;font-size:14.5px}
+.erow .bar-bg{position:absolute;left:0;bottom:0;height:2px;background:var(--cbar,var(--accent));opacity:.5}
+.exp-detail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow:var(--shadow-sm)}
+.xd-ey{font-family:'JetBrains Mono';font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.xd-nm{font-family:'Fraunces';font-weight:800;font-size:30px;letter-spacing:-1px}
+.xd-sub{font-size:11px;color:var(--faint);font-family:'JetBrains Mono';margin-bottom:18px}
+.xd-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.xd-stat{padding:12px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.xd-stat .xk{font-size:10px;color:var(--txt2);font-weight:500}
+.xd-stat .xv{font-family:'Fraunces';font-weight:700;font-size:22px;letter-spacing:-.5px;margin-top:4px}
+.xd-bars{display:flex;flex-direction:column;gap:10px}
+.xbrow{display:flex;align-items:center;gap:11px}
+.xbrow .xbk{width:80px;font-size:11px;color:var(--txt2);font-weight:500}
+.xbrow .xbt{flex:1;height:20px;background:var(--bg);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.xbrow .xbf{height:100%;border-radius:6px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.xbrow .xbv{width:34px;text-align:right;font-family:'JetBrains Mono';font-size:11px;font-weight:600}
+.mini-note{margin-top:16px;padding:14px 16px;border-radius:10px;background:var(--accent-softer);border:1px solid var(--line);border-left:3px solid var(--accent)}
+.mini-note h4{font-family:'Fraunces';font-weight:600;font-size:14px;margin-bottom:5px}
+.mini-note p{font-size:12.5px;color:var(--txt2);line-height:1.55}
+
+.seg{display:inline-flex;gap:3px;background:var(--bg);padding:4px;border-radius:10px;border:1px solid var(--line)}
+.seg button{font-size:12px;font-weight:500;color:var(--txt2);background:none;border:none;cursor:pointer;padding:6px 13px;border-radius:7px;font-family:'Spline Sans';transition:all .14s}
+.seg button.on{background:var(--accent);color:#fff;font-weight:600}
+
+.alert-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.as{padding:16px;border-radius:var(--r);text-align:center;border:1px solid var(--line);background:var(--surface)}
+.as .n{font-family:'Fraunces';font-weight:700;font-size:28px;letter-spacing:-1px}
+.as .l{font-size:11px;color:var(--txt2);margin-top:4px;font-weight:500}
+.arow{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);margin-bottom:10px;transition:all .15s;cursor:pointer}
+.arow:hover{box-shadow:var(--shadow);transform:translateX(2px)}
+.arow .sev{width:7px;height:38px;border-radius:4px;flex-shrink:0}
+.arow .aic{font-size:19px;width:24px;text-align:center;flex-shrink:0}
+.arow .ab{flex:1}
+.arow .at{font-weight:600;font-size:14px}
+.arow .am{font-size:11.5px;color:var(--txt2);font-family:'JetBrains Mono';margin-top:2px}
+.arow .atag{font-family:'JetBrains Mono';font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.sev-crit{background:var(--red)}.sev-warn{background:var(--amber)}.sev-info{background:var(--accent)}
+.tag-crit{background:var(--red-soft);color:var(--red)}.tag-warn{background:var(--amber-soft);color:var(--amber)}.tag-info{background:var(--accent-soft);color:var(--accent)}
+
+.lineage{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.ln-node{flex:1;min-width:120px;padding:18px 14px;border-radius:var(--r);background:var(--bg);border:1px solid var(--line);text-align:center;transition:all .2s}
+.ln-node:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ln-node .ico{font-size:20px;margin-bottom:7px}
+.ln-node .nm{font-family:'Fraunces';font-weight:600;font-size:14px;margin-bottom:3px}
+.ln-node .ds{font-size:10.5px;color:var(--txt2);line-height:1.4}
+.ln-arr{display:flex;align-items:center;justify-content:center;padding:0 5px;color:var(--accent);font-size:18px}
+@media(max-width:820px){.ln-arr{transform:rotate(90deg);width:100%;padding:5px 0}.ln-node{min-width:100%}}
+
+.ov-hero{background:linear-gradient(135deg,var(--accent-softer),var(--surface));border:1px solid var(--line);border-radius:var(--r-lg);padding:28px 30px;margin-bottom:18px}
+.ov-ey{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.ov-hero h2{font-family:'Fraunces';font-weight:700;font-size:30px;letter-spacing:-1px;margin-bottom:12px}
+.ov-hero p{font-size:15px;line-height:1.62;color:var(--txt2);max-width:80ch}
+.ov-hero p b{color:var(--txt);font-weight:600}
+.ov-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+.ov-stat{padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);text-align:center}
+.ov-stat .v{font-family:'Fraunces';font-weight:700;font-size:28px;letter-spacing:-1px;color:var(--accent)}
+.ov-stat .v small{font-size:13px;color:var(--txt2)}
+.ov-stat .k{font-size:11px;color:var(--txt2);margin-top:5px;font-weight:500}
+
+.netmap{position:relative;width:100%;height:460px;border-radius:var(--r);background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.nm-tier{position:absolute;left:14px;font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--faint)}
+.nm-node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;text-align:center;transition:transform .16s}
+.nm-node:hover{transform:translate(-50%,-50%) scale(1.08)}
+.nm-dot{width:var(--sz,30px);height:var(--sz,30px);border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;margin:0 auto;box-shadow:var(--shadow-md);border:2px solid var(--surface)}
+.nm-lbl{font-family:'JetBrains Mono';font-size:9.5px;color:var(--txt2);margin-top:5px;white-space:nowrap;font-weight:600}
+.nm-node.sel .nm-dot{outline:3px solid var(--accent);outline-offset:2px}
+.nm-detail{margin-top:16px;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.nm-detail .nd-ey{font-family:'JetBrains Mono';font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.nm-detail .nd-nm{font-family:'Fraunces';font-weight:700;font-size:22px;letter-spacing:-.5px;margin-bottom:12px}
+.nm-stats{display:flex;gap:22px;flex-wrap:wrap}
+.nm-stats .s .v{font-family:'Fraunces';font-weight:700;font-size:20px;color:var(--accent)}
+.nm-stats .s .k{font-size:10.5px;color:var(--txt2);margin-top:2px}
+
+.sce-grid{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:start}
+.ctrl{margin-bottom:16px}
+.ctrl label{display:flex;justify-content:space-between;font-size:12px;color:var(--txt2);font-weight:500;margin-bottom:8px}
+.ctrl label b{font-family:'JetBrains Mono';color:var(--accent);font-size:13px}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:4px;background:var(--line2);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px rgba(15,27,42,.25)}
+input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--accent);cursor:pointer;border:none}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.chip{font-size:12px;font-weight:500;color:var(--txt2);border:1px solid var(--line2);background:var(--surface);padding:6px 13px;border-radius:8px;cursor:pointer;transition:all .14s;font-family:'Spline Sans'}
+.chip:hover{border-color:var(--accent);color:var(--txt)}
+.chip.on{background:var(--accent);color:#fff;border-color:transparent;font-weight:600}
+.sce-out{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:20px}
+.so{padding:15px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);text-align:center}
+.so .v{font-family:'Fraunces';font-weight:700;font-size:24px;letter-spacing:-1px}
+.so .v.bad{color:var(--red)}.so .v.warn{color:var(--amber)}.so .v.ok{color:var(--green)}
+.so .k{font-size:10.5px;color:var(--txt2);margin-top:5px;font-weight:500}
+
+.heat{display:grid;gap:5px;overflow-x:auto}
+.heat-row{display:grid;grid-template-columns:120px repeat(6,1fr);gap:5px;align-items:center;min-width:560px}
+.heat-lbl{font-size:11px;color:var(--txt2);font-weight:500;text-align:right;padding-right:6px}
+.heat-cell{height:42px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';font-size:11.5px;font-weight:600;color:#fff;transition:transform .14s}
+.heat-cell:hover{transform:scale(1.06)}
+.heat-head{font-family:'JetBrains Mono';font-size:9.5px;color:var(--faint);text-transform:uppercase;text-align:center;padding-bottom:4px}
+
+.kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.kc-top{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.kpi-card h3{font-family:'Fraunces';font-weight:700;font-size:20px;letter-spacing:-.5px}
+.kc-target{font-family:'JetBrains Mono';font-size:11.5px;color:var(--accent);background:var(--accent-soft);padding:4px 11px;border-radius:20px}
+.kc-def{font-size:14px;line-height:1.6;color:var(--txt2);margin-bottom:14px;max-width:78ch}
+.kc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kc-cell{padding:13px 15px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.kc-cell .l{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.kc-cell .v{font-size:13px;color:var(--txt);font-weight:500;line-height:1.4}
+.kc-cell .v.fx{font-family:'JetBrains Mono';font-size:12px;color:var(--accent)}
+
+.takeaway{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:36px 40px;box-shadow:var(--shadow-sm)}
+.tk-label{font-family:'JetBrains Mono';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.takeaway>p{font-size:18px;line-height:1.52;color:var(--txt);max-width:64ch;margin-bottom:20px}
+.takeaway>p b{color:var(--accent);font-weight:600}
+.tk-cols{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:6px}
+.tk-col h5{font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:11px}
+.tk-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.tk-list li{font-size:14.5px;color:var(--txt2);display:flex;gap:9px;align-items:baseline;line-height:1.4}
+.tk-list li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;transform:translateY(-2px)}
+.method{font-size:11px;color:var(--faint);line-height:1.6;font-style:italic;padding:14px 18px;border:1px dashed var(--line2);border-radius:10px;margin-top:16px}
+.method b{color:var(--accent);font-style:normal;font-family:'JetBrains Mono';font-size:10px;text-transform:uppercase;letter-spacing:1px}
+.sec-gap{margin-top:20px}
+
+.sb-toggle{display:none}
+.backdrop{display:none;position:fixed;inset:0;background:rgba(15,27,42,.4);z-index:55}
+@media(max-width:1000px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;width:250px;z-index:60;transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow-lg)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-toggle{display:flex}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .exp-grid,.sce-grid,.chapter-grid,.chapter-grid.rev{grid-template-columns:1fr}
+  .chapter-grid.rev .cg-text{order:0}
+  .kc-grid{grid-template-columns:1fr}.ov-stats{grid-template-columns:repeat(2,1fr)}
+  .tk-cols{grid-template-columns:1fr}.alert-sum,.sce-out{grid-template-columns:1fr}
+  .tb-search{display:none}
+  .brief-hero h1{font-size:38px;letter-spacing:-1.4px}
+  .backdrop.show{display:block}
+}
+@media(max-width:560px){
+  .content{padding:18px 16px 50px}
+  .kpis{grid-template-columns:1fr}
+  .vhead h1{font-size:24px}
+  .brief-hero h1{font-size:30px}
+  .pullq p{font-size:24px}
+  .takeaway{padding:24px 20px}.takeaway>p{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="backdrop" id="backdrop" onclick="closeSidebar()"></div>
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-5 3 11 3-8 2 4h4"/></svg></div>
+      <div class="sb-brand-txt">
+        <span class="sb-kick">GLOBAL SUPPLY CHAIN</span>
+        <span class="sb-name sora">Control<span>Tower</span></span>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-group">
+        <div class="sb-group-t">Overview</div>
+        <button class="sb-item on" data-view="home"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Briefing</button>
+        <button class="sb-item" data-view="overview"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>Business</button>
+      </div>
+      <div class="sb-group">
+        <div class="sb-group-t">Monitor</div>
+        <button class="sb-item" data-view="pulse"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Network Pulse</button>
+        <button class="sb-item" data-view="alerts"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>Alerts<span class="sb-badge">2</span></button>
+        <button class="sb-item" data-view="network"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>DC Explorer</button>
+        <button class="sb-item" data-view="map"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><circle cx="12" cy="4" r="2"/><path d="M12 6v3M10.5 14l-4 3M13.5 14l4 3"/></svg>Network Map</button>
+      </div>
+      <div class="sb-group">
+        <div class="sb-group-t">Analyse</div>
+        <button class="sb-item" data-view="leadtime"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Lead Time</button>
+        <button class="sb-item" data-view="exceptions"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Exceptions</button>
+        <button class="sb-item" data-view="scenario"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Scenario Engine</button>
+        <button class="sb-item" data-view="risk"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Risk Heatmap</button>
+      </div>
+      <div class="sb-group">
+        <div class="sb-group-t">Reference</div>
+        <button class="sb-item" data-view="glossary"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>KPI Glossary</button>
+        <button class="sb-item" data-view="exec"><svg class="sb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Executive Brief</button>
+      </div>
+    </nav>
+    <div class="sb-foot">
+      <div class="n sora">Rushat Dubey</div>
+      <div>MSc Management, Trinity</div>
+      <a href="https://www.linkedin.com/in/rushat" target="_blank" rel="noopener">LinkedIn</a> &middot; <a href="mailto:rushatdubey16@gmail.com">Email</a>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="tb-btn sb-toggle" onclick="openSidebar()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <div class="tb-crumb"><span class="c-root">Control Tower</span><span class="c-sep">/</span><span class="c-cur" id="crumb">Briefing</span></div>
+      <div class="tb-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search SKU, supplier, DC, order ID" aria-label="Search">
+        <span class="kbd">/</span>
+      </div>
+      <div class="tb-right">
+        <div class="tb-status"><span class="tb-dot"></span><span id="tbClock">LIVE</span></div>
+        <button class="tb-btn" onclick="goView('alerts')" aria-label="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><span class="notif">2</span></button>
+        <button class="tb-btn" id="themeBtn" aria-label="Theme"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+
+<!-- ===== BRIEFING ===== -->
+<section id="home" class="view on"><div class="wrap">
+  <div class="brief-hero">
+    <div class="brief-status">
+      <span class="bs-item"><span class="bs-dot"></span>System operational</span><span class="bs-sep"></span>
+      <span class="bs-item">6 distribution centres</span><span class="bs-sep"></span>
+      <span class="bs-item">180k orders monitored</span><span class="bs-sep"></span>
+      <span class="bs-item amber">2 active alerts</span>
+    </div>
+    <div class="brief-kick">Executive Decision Support</div>
+    <h1 class="sora">A distribution network fails <em>one lane at a time</em>, long before finance sees the bill.</h1>
+    <p class="lead">Across 180,000 orders and six distribution centres, the network on-time rate looks healthy. <b>It hides the fact that a single DC is quietly destroying the number</b>, and by month-end the SLA penalties are already spent.</p>
+    <div class="brief-cta">
+      <button class="btn btn-primary" onclick="goView('pulse')">Open control tower</button>
+      <button class="btn btn-ghost" onclick="goView('overview')">View the business</button>
+    </div>
+  </div>
+
+  <div class="chapter"><div class="chapter-grid">
+    <div class="cg-text">
+      <div class="ch-no">01 / THE BLIND SPOT</div>
+      <h2 class="sora">The average is <em>healthy</em>. The network is not.</h2>
+      <p class="ch-body">The network delivers on-time-in-full 82% of the time, a respectable headline. But OTIF averages six very different operations. One DC runs at 91%, another at 68%. A single number lets a failing site hide inside a passing network until the cost lands on the P&L.</p>
+      <div class="mrow">
+        <div class="mpill"><div class="mv">82<small>%</small></div><div class="mk">network OTIF</div></div>
+        <div class="mpill"><div class="mv">23<small>pts</small></div><div class="mk">best vs worst gap</div></div>
+        <div class="mpill"><div class="mv">180<small>k</small></div><div class="mk">orders analysed</div></div>
+      </div>
+    </div>
+    <div class="ch-chart"><div class="cc-cap">OTIF % by distribution centre</div><div class="cbox sm"><canvas id="homeOtif"></canvas></div></div>
+  </div></div>
+
+  <div class="chapter"><div class="chapter-grid rev">
+    <div class="cg-text">
+      <div class="ch-no">02 / THE REAL CULPRIT</div>
+      <h2 class="sora">It isn't slowness. It's <em>unpredictability</em>.</h2>
+      <p class="ch-body">DC-3's average transit is barely worse than the network. What breaks it is <b>variance</b>: its delivery window swings twice as wide as any other site. A customer plans around a slow-but-steady lane. They cannot plan around one that is sometimes fast and sometimes very late.</p>
+      <div class="mrow">
+        <div class="mpill"><div class="mv">2.1<small>x</small></div><div class="mk">DC-3 variance</div></div>
+        <div class="mpill"><div class="mv">68<small>%</small></div><div class="mk">DC-3 OTIF</div></div>
+        <div class="mpill"><div class="mv">#6</div><div class="mk">of 6 on reliability</div></div>
+      </div>
+    </div>
+    <div class="ch-chart"><div class="cc-cap">Lead-time reliability, spread of transit days</div><div class="cbox sm"><canvas id="homeVar"></canvas></div></div>
+  </div></div>
+
+  <div class="pullq"><p class="sora">You cannot fix what an <em>average</em> is hiding from you.</p></div>
+</div></section>
+
+<!-- ===== BUSINESS OVERVIEW ===== -->
+<section id="overview" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Business Overview</h1><span class="vtag">00 / CONTEXT</span></div>
+    <p>The control tower monitors the operations of a modelled multinational. Every figure traces back to this network.</p></div>
+  <div class="ov-hero">
+    <div class="ov-ey">The organisation</div>
+    <h2 class="sora">NovaChain Global</h2>
+    <p><b>NovaChain Global</b> is a multinational retailer running an end-to-end physical supply chain: four manufacturing plants feed six regional distribution centres, supplied by more than 300 vendors, serving customers across 22 countries. The operations function owns one mandate: get the right product to the right place, on time and in full, at the lowest cost to serve.</p>
+    <div class="ov-stats">
+      <div class="ov-stat"><div class="v">6</div><div class="k">Distribution centres</div></div>
+      <div class="ov-stat"><div class="v">4</div><div class="k">Manufacturing plants</div></div>
+      <div class="ov-stat"><div class="v">300<small>+</small></div><div class="k">Active suppliers</div></div>
+      <div class="ov-stat"><div class="v">22</div><div class="k">Countries served</div></div>
+    </div>
+  </div>
+  <div class="card card-p">
+    <div class="card-h"><h3 class="sora">Data lineage</h3></div>
+    <div class="card-cap">How a transaction becomes an executive metric.</div>
+    <div class="lineage">
+      <div class="ln-node"><div class="ico">&#128230;</div><div class="nm sora">ERP</div><div class="ds">Orders, invoices, master data</div></div>
+      <div class="ln-arr">&rarr;</div>
+      <div class="ln-node"><div class="ico">&#127981;</div><div class="nm sora">WMS</div><div class="ds">Receiving, picking, dispatch</div></div>
+      <div class="ln-arr">&rarr;</div>
+      <div class="ln-node"><div class="ico">&#128451;</div><div class="nm sora">SQL Warehouse</div><div class="ds">ETL, star schema, KPI views</div></div>
+      <div class="ln-arr">&rarr;</div>
+      <div class="ln-node"><div class="ico">&#128202;</div><div class="nm sora">Power BI</div><div class="ds">DAX measures, model</div></div>
+      <div class="ln-arr">&rarr;</div>
+      <div class="ln-node"><div class="ico">&#127963;</div><div class="nm sora">Control Tower</div><div class="ds">Dashboard &amp; alerts</div></div>
+    </div>
+    <div class="method"><b>Build note</b> &nbsp; Public DataCo Smart Supply Chain order data stands in for the ERP/WMS layer. ETL derives OTIF, on-time and in-full flags; a star schema feeds rolling KPIs via SQL window functions. DC and carrier dimensions are synthetically generated with a fixed seed.</div>
+  </div>
+</div></section>
+
+<!-- ===== NETWORK PULSE ===== -->
+<section id="pulse" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Network Pulse</h1><span class="vtag">01 / COMMAND VIEW</span></div>
+    <p>The single screen a controller watches each morning: headline SLA health, the trend, and where exceptions concentrate.</p></div>
+  <div class="kpis">
+    <div class="kpi" style="--kc:var(--dc1);--kc-soft:var(--accent-soft)"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div><span class="kpi-trend up">&#9650; 1.2</span></div><div class="v"><span data-count="82.4" data-dec="1">0</span><small>%</small></div><div class="k">Network OTIF</div><div class="sub">30-day trend</div></div>
+    <div class="kpi" style="--kc:var(--green);--kc-soft:var(--green-soft)"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><span class="kpi-trend up">&#9650; 0.6</span></div><div class="v"><span data-count="89.1" data-dec="1">0</span><small>%</small></div><div class="k">On-Time</div><div class="sub">scheduled vs actual</div></div>
+    <div class="kpi" style="--kc:var(--dc2);--kc-soft:var(--accent-soft)"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="kpi-trend up">&#9650; 0.8</span></div><div class="v"><span data-count="92.6" data-dec="1">0</span><small>%</small></div><div class="k">In-Full</div><div class="sub">complete lines</div></div>
+    <div class="kpi" style="--kc:var(--amber);--kc-soft:var(--amber-soft)"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg></div><span class="kpi-trend flat">&#9644; flat</span></div><div class="v"><span data-count="5.4" data-dec="1">0</span><small>d</small></div><div class="k">Avg Lead Time</div><div class="sub">order to delivery</div></div>
+    <div class="kpi" style="--kc:var(--red);--kc-soft:var(--red-soft)"><div class="kpi-top"><div class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><span class="kpi-trend dn">&#9650; 310</span></div><div class="v"><span data-count="4180" data-dec="0" data-comma="1">0</span></div><div class="k">Open Exceptions</div><div class="sub">SLA-breaching</div></div>
+  </div>
+  <div class="insight"><div class="il">Controller's read</div><p>Network OTIF is up 1.2 points month-on-month, but <b>the gain is entirely from DC-1 and DC-6</b>. DC-3 is flat at 68% and now accounts for 41% of all open exceptions despite handling 17% of volume.</p></div>
+  <div class="grid g2">
+    <div class="card card-p"><div class="card-h"><h3 class="sora">OTIF trend, rolling 3-month</h3></div><div class="card-cap">Network vs the two outlier DCs</div><div class="cbox"><canvas id="pulseTrend"></canvas></div></div>
+    <div class="card card-p"><div class="card-h"><h3 class="sora">Exception share by DC</h3></div><div class="card-cap">Where SLA breaches concentrate</div><div class="cbox"><canvas id="pulseExc"></canvas></div></div>
+  </div>
+  <div class="card card-p sec-gap"><div class="card-h"><h3 class="sora">Monthly volume vs OTIF</h3></div><div class="card-cap">Volume on bars, OTIF on the line, testing whether failures track demand peaks</div><div class="cbox tall"><canvas id="pulseVol"></canvas></div></div>
+</div></section>
+
+<!-- ===== ALERTS ===== -->
+<section id="alerts" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Executive Alerts</h1><span class="vtag">EXCEPTIONS</span></div>
+    <p>A control tower pushes exceptions to the controller rather than making them hunt. Alerts fire from rules against KPI thresholds, sorted by severity.</p></div>
+  <div class="alert-sum">
+    <div class="as"><div class="n" style="color:var(--red)">2</div><div class="l">Critical</div></div>
+    <div class="as"><div class="n" style="color:var(--amber)">3</div><div class="l">Warning</div></div>
+    <div class="as"><div class="n" style="color:var(--accent)">2</div><div class="l">Informational</div></div>
+  </div>
+  <div id="alertList"></div>
+  <div class="method"><b>Rule engine</b> &nbsp; Each alert fires from a transparent threshold rule, for example OTIF below 75% raises critical. The logic is auditable and maps to the KPI targets in the glossary.</div>
+</div></section>
+
+<!-- ===== DC EXPLORER ===== -->
+<section id="network" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">DC Explorer</h1><span class="vtag">02 / DRILL-THROUGH</span></div>
+    <p>Click any distribution centre to read its full operating profile: service, reliability, cost-to-serve and rank.</p></div>
+  <div class="exp-grid">
+    <div class="exp-list" id="dcList"></div>
+    <div class="exp-detail">
+      <div class="xd-ey">DC profile</div>
+      <div class="xd-nm sora" id="xdName">DC-3</div>
+      <div class="xd-sub" id="xdRank">Rank 6 of 6 · Midlands hub</div>
+      <div class="xd-stats">
+        <div class="xd-stat"><div class="xk">OTIF</div><div class="xv" id="xdOtif">68%</div></div>
+        <div class="xd-stat"><div class="xk">Avg lead time</div><div class="xv" id="xdLt">6.1d</div></div>
+        <div class="xd-stat"><div class="xk">Lead-time variance</div><div class="xv" id="xdVar">2.1x</div></div>
+        <div class="xd-stat"><div class="xk">Cost-to-serve</div><div class="xv" id="xdCts">4.2%</div></div>
+      </div>
+      <div class="xd-bars">
+        <div class="xbrow"><span class="xbk">Service</span><span class="xbt"><span class="xbf" id="bService"></span></span><span class="xbv" id="vService"></span></div>
+        <div class="xbrow"><span class="xbk">Reliability</span><span class="xbt"><span class="xbf" id="bRel"></span></span><span class="xbv" id="vRel"></span></div>
+        <div class="xbrow"><span class="xbk">Margin</span><span class="xbt"><span class="xbf" id="bMargin"></span></span><span class="xbv" id="vMargin"></span></div>
+        <div class="xbrow"><span class="xbk">Volume</span><span class="xbt"><span class="xbf" id="bVol"></span></span><span class="xbv" id="vVol"></span></div>
+      </div>
+      <div class="mini-note" id="dcIns"></div>
+    </div>
+  </div>
+  <div class="card card-p sec-gap"><div class="card-h"><h3 class="sora">Carrier scorecard</h3></div><div class="card-cap">OTIF by carrier within each DC, the routing question</div><div class="cbox tall"><canvas id="carrierScore"></canvas></div></div>
+</div></section>
+
+<!-- ===== NETWORK MAP ===== -->
+<section id="map" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Network Map</h1><span class="vtag">03 / TOPOLOGY</span></div>
+    <p>The physical network, top to bottom: plants feed distribution centres feed customer regions. Click any node to read its flow.</p></div>
+  <div class="netmap" id="netmap">
+    <div class="nm-tier" style="top:36px">Plants</div>
+    <div class="nm-tier" style="top:210px">Distribution centres</div>
+    <div class="nm-tier" style="top:394px">Customer regions</div>
+  </div>
+  <div class="nm-detail" id="nmDetail">
+    <div class="nd-ey">Node profile</div>
+    <div class="nd-nm sora" id="nmName">Select a node</div>
+    <div class="nm-stats" id="nmStats"><div class="s"><div class="v">&middot;</div><div class="k">Tap a plant, DC or region above</div></div></div>
+  </div>
+</div></section>
+
+<!-- ===== LEAD TIME ===== -->
+<section id="leadtime" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Lead Time &amp; Reliability</h1><span class="vtag">04 / VARIANCE</span></div>
+    <p>Average lead time tells you how slow a lane is. Variance tells you whether you can promise a date. This module separates the two.</p></div>
+  <div class="grid g2">
+    <div class="card card-p"><div class="card-h"><h3 class="sora">Mean lead time vs variance</h3></div><div class="card-cap">A site can be fast on average and still unreliable</div><div class="cbox"><canvas id="ltMeanVar"></canvas></div></div>
+    <div class="card card-p"><div class="card-h"><h3 class="sora">Transit-day distribution</h3></div><div class="card-cap">DC-3 vs DC-1, same network, different shape</div><div class="cbox"><canvas id="ltDist"></canvas></div></div>
+  </div>
+  <div class="card card-p sec-gap"><div class="card-h"><h3 class="sora">Month-over-month lead-time movement</h3></div><div class="card-cap">Per-DC delta, early warning on a degrading lane (SQL LAG)</div><div class="cbox tall"><canvas id="ltMom"></canvas></div></div>
+  <div class="insight sec-gap"><div class="il">Why variance, not the mean</div><p>DC-3's mean transit is 6.1 days versus 5.4 for the network, a 0.7-day gap that looks minor. But its <b>standard deviation is 2.1x the network's</b>. Cutting variance, not average speed, is the lever that moves its OTIF.</p></div>
+</div></section>
+
+<!-- ===== EXCEPTIONS ===== -->
+<section id="exceptions" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Exceptions &amp; Root Cause</h1><span class="vtag">05 / RCA</span></div>
+    <p>Every SLA breach has a reason code. The Pareto answers the operational question: which three causes, fixed, recover the most service?</p></div>
+  <div class="grid g2">
+    <div class="card card-p"><div class="card-h"><h3 class="sora">Late-delivery reason Pareto</h3></div><div class="card-cap">Cumulative line crosses 80% at the third cause</div><div class="cbox tall"><canvas id="excPareto"></canvas></div></div>
+    <div class="card card-p"><div class="card-h"><h3 class="sora">Exceptions by shipping mode</h3></div><div class="card-cap">Where breaches sit by service level</div><div class="cbox tall"><canvas id="excMode"></canvas></div></div>
+  </div>
+  <div class="insight sec-gap"><div class="il">Root cause</div><p>Three reasons drive 79% of late deliveries: <b>carrier transit overrun, late dispatch, and order-hold release delay</b>. Two of the three are internal and fixable without a carrier change.</p></div>
+</div></section>
+
+<!-- ===== SCENARIO ===== -->
+<section id="scenario" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Scenario Engine</h1><span class="vtag">06 / STRESS TEST</span></div>
+    <p>Pick a DC, apply a demand surge and a carrier-reliability shock, and watch OTIF, lead time and exceptions respond.</p></div>
+  <div class="card card-p">
+    <div class="chips" id="sceChips"></div>
+    <div class="sce-grid">
+      <div>
+        <div class="ctrl"><label>Demand surge <b id="lblDemand">+0%</b></label><input type="range" id="sDemand" min="0" max="60" value="0" step="5"></div>
+        <div class="ctrl"><label>Carrier reliability shock <b id="lblShock">0%</b></label><input type="range" id="sShock" min="0" max="40" value="0" step="5"></div>
+        <div class="ctrl"><label>Safety-stock buffer <b id="lblBuffer">5 days</b></label><input type="range" id="sBuffer" min="0" max="12" value="5" step="1"></div>
+        <div class="mini-note"><h4 class="sora">Reading the result</h4><p>A surge alone is survivable; a surge <b>plus</b> a carrier shock is what tips a DC into breach. The buffer shows how much safety stock absorbs the shock.</p></div>
+      </div>
+      <div>
+        <div class="cbox tall"><canvas id="sceChart"></canvas></div>
+        <div class="sce-out">
+          <div class="so"><div class="v" id="oOtif">&middot;</div><div class="k">Projected OTIF</div></div>
+          <div class="so"><div class="v" id="oLt">&middot;</div><div class="k">Lead time (days)</div></div>
+          <div class="so"><div class="v" id="oExc">&middot;</div><div class="k">Exception count</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="method"><b>Model note</b> &nbsp; A transparent operational model: OTIF degrades with demand above capacity and with carrier shock, partially restored by the buffer. Calibrated to per-DC baselines, clearly illustrative.</div>
+</div></section>
+
+<!-- ===== RISK ===== -->
+<section id="risk" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Supply Chain Risk Heatmap</h1><span class="vtag">07 / RISK</span></div>
+    <p>Each DC scored across six risk dimensions. Red is exposure, green is resilience. Spot concentrated risk at a glance.</p></div>
+  <div class="card card-p"><div class="heat" id="heat"></div>
+    <div style="margin-top:14px;font-size:11.5px;color:var(--txt2)">Score: 1 (resilient) to 5 (exposed)</div>
+  </div>
+  <div class="insight sec-gap"><div class="il">Concentration risk</div><p>DC-3 scores high on carrier dependency and lead-time volatility simultaneously, and the two combine. A single-carrier failure on its express lane has no fallback. <b>The mitigation is dual-sourcing the lane, not pushing the existing carrier harder.</b></p></div>
+</div></section>
+
+<!-- ===== GLOSSARY ===== -->
+<section id="glossary" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">KPI Glossary</h1><span class="vtag">DEFINITIONS</span></div>
+    <p>Every metric defined the way a data team documents a semantic layer: meaning, formula, business importance, target and owner.</p></div>
+  <div id="glossaryList"></div>
+</div></section>
+
+<!-- ===== EXEC BRIEF ===== -->
+<section id="exec" class="view"><div class="wrap">
+  <div class="vhead"><div class="vhead-top"><h1 class="sora">Executive Brief</h1><span class="vtag">SO WHAT</span></div>
+    <p>The one page that goes to the operations director: finding, cause, recommendation, expected impact.</p></div>
+  <div class="takeaway">
+    <div class="tk-label">Findings &amp; recommendation</div>
+    <p>The network's 82% OTIF masks a structural outlier. <b>DC-3 carries 2.1x the lead-time variance of the network and 41% of all exceptions on 17% of volume.</b> The cause is concentrated: single-carrier dependency on its express lane, compounded by internal dispatch delays. Re-routing that lane and dual-sourcing the backup is projected to recover roughly six points of OTIF.</p>
+    <div class="tk-cols">
+      <div class="tk-col"><h5>What we found</h5><ul class="tk-list">
+        <li>One DC drives 41% of exceptions on 17% of volume</li>
+        <li>Variance, not average speed, breaks its SLA</li>
+        <li>Three reason codes explain 79% of late deliveries</li>
+        <li>Service failure tracks the thinnest margin</li>
+      </ul></div>
+      <div class="tk-col"><h5>What we recommend</h5><ul class="tk-list">
+        <li>Re-route DC-3 express lane to the reliable carrier</li>
+        <li>Dual-source the backup to remove single-point risk</li>
+        <li>Fix internal dispatch and order-hold delays</li>
+        <li>Monitor rolling-3M OTIF per DC, not the average</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="grid g3 sec-gap">
+    <div class="kpi" style="--kc:var(--green);--kc-soft:var(--green-soft)"><div class="v">+<span data-count="6" data-dec="0">0</span><small>pts</small></div><div class="k">Projected OTIF recovery</div></div>
+    <div class="kpi" style="--kc:var(--dc1);--kc-soft:var(--accent-soft)"><div class="v">€<span data-count="1.4" data-dec="1">0</span><small>M</small></div><div class="k">Annual failure cost addressed</div></div>
+    <div class="kpi" style="--kc:var(--dc2);--kc-soft:var(--accent-soft)"><div class="v"><span data-count="1" data-dec="0">0</span></div><div class="k">Lane re-route, no capex</div></div>
+  </div>
+</div></section>
+
+    </main>
+  </div>
+</div>
+<script>
+/* ===== DATA MODEL ===== */
+const DCS = ['DC-1','DC-2','DC-3','DC-4','DC-5','DC-6'];
+const DC = {
+  'DC-1':{region:'Dublin hub',  otif:91,lt:4.6,vari:0.9,cts:11.4,vol:24,rel:92,svc:91,exc:9,
+          note:'The benchmark. Tight variance, dual-sourced lanes, fastest dispatch. Everything DC-3 should be.'},
+  'DC-2':{region:'Cork south',  otif:85,lt:5.1,vari:1.2,cts:9.8, vol:19,rel:84,svc:85,exc:14,
+          note:'Solid mid-pack. Slightly long lead time but reliable, so customers can plan around it.'},
+  'DC-3':{region:'Midlands hub',otif:68,lt:6.1,vari:2.1,cts:4.2, vol:17,rel:54,svc:68,exc:41,
+          note:'The outlier. Single-carrier express dependency plus dispatch delays. 41% of network exceptions on 17% of volume.'},
+  'DC-4':{region:'Galway west', otif:83,lt:5.3,vari:1.3,cts:9.1, vol:13,rel:82,svc:83,exc:13,
+          note:'Reliable but capacity-tight on peaks. A demand surge is its main exposure.'},
+  'DC-5':{region:'Limerick',    otif:80,lt:5.6,vari:1.5,cts:8.3, vol:12,rel:76,svc:80,exc:12,
+          note:'Lead-time creep over the last quarter. Worth watching before it becomes a second DC-3.'},
+  'DC-6':{region:'Belfast north',otif:88,lt:4.9,vari:1.0,cts:10.6,vol:15,rel:89,svc:88,exc:11,
+          note:'Second-best site. Recent OTIF gains came largely from here and DC-1.'}
+};
+const NET = {otif:82.4, lt:5.4, vari:1.0};
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ===== CHART HELPERS ===== */
+let charts={};
+function pal(){const s=getComputedStyle(document.body);const g=n=>s.getPropertyValue(n).trim();
+  return{txt:g('--txt'),txt2:g('--txt2'),grid:g('--line'),panel:g('--surface'),
+    accent:g('--accent'),accent2:g('--accent2'),green:g('--green'),red:g('--red'),amber:g('--amber'),
+    dc1:g('--dc1'),dc2:g('--dc2'),dc3:g('--dc3'),dc4:g('--dc4'),dc5:g('--dc5'),dc6:g('--dc6')};}
+const MONO={family:'JetBrains Mono, monospace',size:10};
+if(window.Chart){Chart.defaults.font.family="'Spline Sans', sans-serif";Chart.defaults.animation.duration=620;
+  Chart.defaults.animation.easing='easeOutQuart';Chart.defaults.elements.bar.borderRadius=5;
+  Chart.defaults.interaction.mode='index';Chart.defaults.interaction.intersect=false;Chart.defaults.plugins.tooltip.usePointStyle=true;}
+function reg(name,inst){if(charts[name]){try{charts[name].destroy();}catch(e){}}charts[name]=inst;return inst;}
+function TIP(){const p=pal();return{backgroundColor:p.panel,titleColor:p.txt,bodyColor:p.txt2,borderColor:p.grid,borderWidth:1,padding:11,cornerRadius:9,boxPadding:5,usePointStyle:true,titleFont:{family:'Spline Sans',weight:'600',size:12},bodyFont:MONO,caretSize:5};}
+function AX(sfx,opts){const p=pal();return Object.assign({ticks:{color:p.txt2,font:MONO,padding:6,callback:v=>v+(sfx||'')},grid:{color:p.grid,lineWidth:.7,drawTicks:false},border:{display:false}},opts||{});}
+function noLeg(){return{legend:{display:false},tooltip:TIP()};}
+function leg(){const p=pal();return{legend:{display:true,labels:{color:p.txt2,font:MONO,boxWidth:8,boxHeight:8,usePointStyle:true,pointStyle:'circle'}},tooltip:TIP()};}
+function dcColor(name){const p=pal();return{'DC-1':p.dc1,'DC-2':p.dc2,'DC-3':p.dc3,'DC-4':p.dc4,'DC-5':p.dc5,'DC-6':p.dc6}[name];}
+
+function buildHome(){
+  const p=pal();
+  reg('homeOtif',new Chart(document.getElementById('homeOtif'),{type:'bar',
+    data:{labels:DCS,datasets:[{data:DCS.map(d=>DC[d].otif),backgroundColor:DCS.map(dcColor),borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{...noLeg(),tooltip:{...TIP(),callbacks:{label:c=>c.parsed.y+'% OTIF'}}},
+      scales:{x:AX(),y:AX('%',{min:50,max:100})}}}));
+  reg('homeVar',new Chart(document.getElementById('homeVar'),{type:'bar',
+    data:{labels:DCS,datasets:[{data:DCS.map(d=>DC[d].vari),backgroundColor:DCS.map(dcColor),borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{...noLeg(),tooltip:{...TIP(),callbacks:{label:c=>c.parsed.x+'x variance'}}},
+      scales:{x:AX('x'),y:AX()}}}));
+}
+
+/* ===================== PULSE ===================== */
+function buildPulse(){
+  const p=pal();
+  const rng=(b,n)=>MONTHS.map((_,i)=>Math.round((b+Math.sin(i/2)*2+ i*0.4)*10)/10);
+  reg('pulseTrend',new Chart(document.getElementById('pulseTrend'),{type:'line',
+    data:{labels:MONTHS,datasets:[
+      {label:'Network',data:rng(78),borderColor:p.accent,backgroundColor:'transparent',borderWidth:2.5,tension:.4,pointRadius:0},
+      {label:'DC-1',data:rng(87),borderColor:p.green,borderWidth:1.8,tension:.4,pointRadius:0},
+      {label:'DC-3',data:MONTHS.map((_,i)=>Math.round((66+Math.sin(i/3)*1.5)*10)/10),borderColor:p.red,borderWidth:1.8,tension:.4,pointRadius:0,borderDash:[5,3]}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:leg(),scales:{x:AX(),y:AX('%',{min:60,max:95})}}}));
+  reg('pulseExc',new Chart(document.getElementById('pulseExc'),{type:'doughnut',
+    data:{labels:DCS,datasets:[{data:DCS.map(d=>DC[d].exc),backgroundColor:DCS.map(dcColor),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:p.txt2,font:MONO,boxWidth:10,boxHeight:10}},tooltip:{...TIP(),callbacks:{label:c=>c.label+': '+c.parsed+'% of exceptions'}}}}}));
+  reg('pulseVol',new Chart(document.getElementById('pulseVol'),{
+    data:{labels:MONTHS,datasets:[
+      {type:'bar',label:'Order volume',data:MONTHS.map((_,i)=>4200+Math.round(Math.sin(i/2)*900+i*120)),backgroundColor:p.accent2+'55',borderRadius:4,borderSkipped:false,yAxisID:'y'},
+      {type:'line',label:'OTIF %',data:MONTHS.map((_,i)=>Math.round((80+Math.sin(i/2.4)*3+i*0.2)*10)/10),borderColor:p.accent,borderWidth:2.5,tension:.4,pointRadius:0,yAxisID:'y1'}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:leg(),
+      scales:{x:AX(),y:AX('',{position:'left'}),y1:AX('%',{position:'right',min:70,max:92,grid:{drawOnChartArea:false}})}}}));
+}
+
+/* ===================== DC EXPLORER ===================== */
+let selDC='DC-3';
+function buildDcList(){
+  const wrap=document.getElementById('dcList');wrap.innerHTML='';
+  const ranked=[...DCS].sort((a,b)=>DC[b].otif-DC[a].otif);
+  ranked.forEach((d,i)=>{
+    const o=DC[d];const el=document.createElement('div');
+    el.className='erow'+(d===selDC?' sel':'');el.tabIndex=0;el.setAttribute('role','button');el.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();el.click();}};
+    el.style.setProperty('--cbar',dcColor(d));
+    el.innerHTML=`<div class="pos sora">${i+1}</div>
+      <div class="ch"><div class="nm sora">${d}</div><div class="sub">${o.region}</div></div>
+      <div class="amt" style="color:${dcColor(d)}">${o.otif}%</div>
+      <span class="bar-bg" style="width:${o.otif}%"></span>`;
+    el.onclick=()=>{selDC=d;renderDc();buildDcList();};
+    wrap.appendChild(el);
+  });
+}
+function renderDc(){
+  const o=DC[selDC];const p=pal();
+  const rank=[...DCS].sort((a,b)=>DC[b].otif-DC[a].otif).indexOf(selDC)+1;
+  document.getElementById('xdName').textContent=selDC;
+  document.getElementById('xdRank').textContent=`Rank ${rank} of 6 · ${o.region}`;
+  document.getElementById('xdOtif').textContent=o.otif+'%';
+  document.getElementById('xdLt').textContent=o.lt+'d';
+  document.getElementById('xdVar').textContent=o.vari+'x';
+  document.getElementById('xdCts').textContent=o.cts+'%';
+  const setBar=(b,v,val,col)=>{const e=document.getElementById(b);e.style.width=v+'%';e.style.background=col;document.getElementById(val).textContent=v;};
+  setBar('bService',o.svc,'vService',dcColor(selDC));
+  setBar('bRel',o.rel,'vRel',o.rel>80?p.green:o.rel>65?p.amber:p.red);
+  setBar('bMargin',Math.round(o.cts/12*100),'vMargin',p.accent2);
+  setBar('bVol',Math.round(o.vol/24*100),'vVol',p.accent);
+  document.getElementById('dcIns').innerHTML=`<h4 class="sora">${selDC} read</h4><p>${o.note}</p>`;
+}
+function buildCarrier(){
+  const p=pal();
+  const carriers=['Carrier A','Carrier B','Carrier C'];
+  reg('carrierScore',new Chart(document.getElementById('carrierScore'),{type:'bar',
+    data:{labels:DCS,datasets:carriers.map((c,ci)=>({
+      label:c,
+      data:DCS.map(d=>{const base=DC[d].otif;return Math.max(45,Math.min(96,Math.round(base+[6,-2,-12][ci]+(d==='DC-3'&&ci===1?14:0))));}),
+      backgroundColor:[p.accent,p.green,p.red][ci]+'cc',borderRadius:4,borderSkipped:false
+    }))},options:{responsive:true,maintainAspectRatio:false,plugins:leg(),scales:{x:AX(),y:AX('%',{min:40,max:100})}}}));
+}
+
+/* ===================== LEAD TIME ===================== */
+function buildLead(){
+  const p=pal();
+  reg('ltMeanVar',new Chart(document.getElementById('ltMeanVar'),{type:'bar',
+    data:{labels:DCS,datasets:[
+      {label:'Mean lead time (d)',data:DCS.map(d=>DC[d].lt),backgroundColor:p.accent2+'aa',borderRadius:4,borderSkipped:false,yAxisID:'y'},
+      {label:'Variance (x)',data:DCS.map(d=>DC[d].vari),type:'line',borderColor:p.red,borderWidth:2.5,tension:.3,pointRadius:4,pointBackgroundColor:p.red,yAxisID:'y1'}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:leg(),
+      scales:{x:AX(),y:AX('d',{position:'left',min:0,max:8}),y1:AX('x',{position:'right',min:0,max:2.5,grid:{drawOnChartArea:false}})}}}));
+  // distributions
+  const bell=(mu,sd)=>Array.from({length:13},(_,i)=>{const x=i;return Math.round(Math.exp(-0.5*((x-mu)/sd)**2)/(sd)*100);});
+  reg('ltDist',new Chart(document.getElementById('ltDist'),{type:'line',
+    data:{labels:Array.from({length:13},(_,i)=>i+'d'),datasets:[
+      {label:'DC-1 (tight)',data:bell(4.6,1.0),borderColor:p.accent,backgroundColor:p.accent+'22',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+      {label:'DC-3 (wide)',data:bell(6.1,2.3),borderColor:p.red,backgroundColor:p.red+'18',fill:true,tension:.4,pointRadius:0,borderWidth:2}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:leg(),scales:{x:AX(),y:AX('',{display:false})}}}));
+  reg('ltMom',new Chart(document.getElementById('ltMom'),{type:'bar',
+    data:{labels:DCS,datasets:[{label:'MoM lead-time Δ (days)',
+      data:[-0.2,0.1,0.6,0.0,0.4,-0.1],
+      backgroundColor:DCS.map((d,i)=>[-0.2,0.1,0.6,0.0,0.4,-0.1][i]>0.3?p.red:[-0.2,0.1,0.6,0.0,0.4,-0.1][i]>0?p.amber:p.green),
+      borderRadius:4,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:noLeg(),scales:{x:AX(),y:AX('d')}}}));
+}
+
+/* ===================== EXCEPTIONS ===================== */
+function buildExc(){
+  const p=pal();
+  const reasons=['Carrier transit overrun','Late dispatch from DC','Order-hold release delay','Stockout / partial','Address / docs','Customer reschedule'];
+  const vals=[34,27,18,11,6,4];
+  let cum=0;const cumLine=vals.map(v=>{cum+=v;return cum;});
+  reg('excPareto',new Chart(document.getElementById('excPareto'),{
+    data:{labels:reasons,datasets:[
+      {type:'bar',label:'% of late deliveries',data:vals,backgroundColor:vals.map((v,i)=>i<3?p.red+'cc':p.accent2+'88'),borderRadius:4,borderSkipped:false,yAxisID:'y'},
+      {type:'line',label:'Cumulative %',data:cumLine,borderColor:p.accent,borderWidth:2.5,tension:.2,pointRadius:3,yAxisID:'y1'}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:leg(),
+      scales:{x:AX('',{ticks:{color:p.txt2,font:{family:'JetBrains Mono',size:8.5},maxRotation:38}}),y:AX('%',{position:'left'}),y1:AX('%',{position:'right',min:0,max:100,grid:{drawOnChartArea:false}})}}}));
+  reg('excMode',new Chart(document.getElementById('excMode'),{type:'bar',
+    data:{labels:['Standard','Express','Same-day','First-class'],datasets:[{data:[46,31,15,8],backgroundColor:[p.accent2+'cc',p.red+'cc',p.amber+'cc',p.green+'cc'],borderRadius:5,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{...noLeg(),tooltip:{...TIP(),callbacks:{label:c=>c.parsed.x+'% of exceptions'}}},scales:{x:AX('%'),y:AX()}}}));
+}
+
+/* ===================== SCENARIO ENGINE ===================== */
+let sceDC='DC-3';
+function buildSceChips(){
+  const w=document.getElementById('sceChips');w.innerHTML='';
+  DCS.forEach(d=>{const b=document.createElement('button');b.className='chip'+(d===sceDC?' on':'');b.textContent=d;b.setAttribute('aria-pressed',d===sceDC);
+    b.onclick=()=>{sceDC=d;[...w.children].forEach(x=>x.classList.toggle('on',x.textContent===d));sceRecompute();};w.appendChild(b);});
+}
+function sceRecompute(){
+  const o=DC[sceDC];
+  const demand=+document.getElementById('sDemand').value;
+  const shock=+document.getElementById('sShock').value;
+  const buffer=+document.getElementById('sBuffer').value;
+  document.getElementById('lblDemand').textContent='+'+demand+'%';
+  document.getElementById('lblShock').textContent=shock+'%';
+  document.getElementById('lblBuffer').textContent=buffer+' days';
+  // transparent model
+  const capacityStrain=Math.max(0,demand-15)*0.35;       // surge above ~15% bites
+  const shockHit=shock*0.55*(2-o.rel/90);                 // unreliable DCs hit harder
+  const bufferHelp=Math.min(buffer*1.6, capacityStrain+shockHit*0.6); // buffer absorbs
+  let otif=o.otif - capacityStrain - shockHit + bufferHelp;
+  otif=Math.max(35,Math.min(98,Math.round(otif*10)/10));
+  let lt=Math.round((o.lt + demand*0.02 + shock*0.03 - buffer*0.04)*10)/10;
+  lt=Math.max(3,lt);
+  const exc=Math.round((100-otif)*o.vol*4.2);
+  const oo=document.getElementById('oOtif');oo.textContent=otif+'%';
+  oo.className='v '+(otif>=85?'ok':otif>=72?'warn':'bad');
+  document.getElementById('oLt').textContent=lt;
+  document.getElementById('oExc').textContent=exc.toLocaleString();
+  // chart: baseline vs scenario across the network
+  const p=pal();
+  reg('sceChart',new Chart(document.getElementById('sceChart'),{type:'bar',
+    data:{labels:DCS,datasets:[
+      {label:'Baseline OTIF',data:DCS.map(d=>DC[d].otif),backgroundColor:p.accent2+'55',borderRadius:4,borderSkipped:false},
+      {label:'Under scenario',data:DCS.map(d=>{
+        if(d!==sceDC)return DC[d].otif;
+        return otif;
+      }),backgroundColor:DCS.map(d=>d===sceDC?(otif>=85?p.green:otif>=72?p.amber:p.red):p.accent2+'22'),borderRadius:4,borderSkipped:false}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:leg(),scales:{x:AX(),y:AX('%',{min:30,max:100})}}}));
+}
+['sDemand','sShock','sBuffer'].forEach(id=>{const e=document.getElementById(id);if(e)e.oninput=sceRecompute;});
+
+/* ===================== RISK HEATMAP ===================== */
+function buildHeat(){
+  const dims=['Carrier dependency','Lead-time volatility','Capacity headroom','Single-source lanes','Demand exposure','Recovery time'];
+  // 1 resilient .. 5 exposed
+  const scores={
+    'DC-1':[1,1,2,1,2,1],'DC-2':[2,2,3,2,3,2],'DC-3':[5,5,4,5,3,4],
+    'DC-4':[2,2,4,3,4,2],'DC-5':[3,3,3,3,3,3],'DC-6':[2,1,2,2,2,2]
+  };
+  const col=v=>['#1f8a5b','#7cb518','#c47d1a','#d4622a','#c2433a'][v-1];
+  const wrap=document.getElementById('heat');wrap.innerHTML='';
+  // header
+  const head=document.createElement('div');head.className='heat-row';
+  head.innerHTML='<div class="heat-lbl"></div>'+dims.map(d=>`<div class="heat-head">${d}</div>`).join('');
+  wrap.appendChild(head);
+  DCS.forEach(d=>{
+    const row=document.createElement('div');row.className='heat-row';
+    row.innerHTML=`<div class="heat-lbl sora" style="font-family:'Fraunces';font-weight:600;font-size:13px;color:${dcColor(d)}">${d}</div>`+
+      scores[d].map(v=>`<div class="heat-cell" style="background:${col(v)}" title="${v}/5">${v}</div>`).join('');
+    wrap.appendChild(row);
+  });
+}
+
+/* ===================== BUILD DISPATCH ===================== */
+/* ===================== ALERTS ===================== */
+const ALERTS=[
+  {sev:'crit',ico:'&#128680;',title:'DC-3 OTIF breached SLA floor',meta:'OTIF 68% vs 75% target &middot; Midlands hub',tag:'CRITICAL'},
+  {sev:'crit',ico:'&#9888;',title:'Supplier S-12 lead time +4 days',meta:'Single-source on DC-3 express lane',tag:'CRITICAL'},
+  {sev:'warn',ico:'&#128230;',title:'DC-4 inventory below safety stock',meta:'2 SKUs &middot; 1.2 days of cover remaining',tag:'WARNING'},
+  {sev:'warn',ico:'&#127981;',title:'Warehouse utilisation at 94%',meta:'DC-1 &middot; above 90% capacity threshold',tag:'WARNING'},
+  {sev:'warn',ico:'&#128200;',title:'Demand forecast exceeded',meta:'Region EU-South &middot; actual 18% over plan',tag:'WARNING'},
+  {sev:'info',ico:'&#128666;',title:'Carrier B OTIF improving',meta:'+3.1 pts over 30 days &middot; reroute candidate',tag:'INFO'},
+  {sev:'info',ico:'&#9989;',title:'DC-6 cleared exception backlog',meta:'Belfast north &middot; 0 open over 48h',tag:'INFO'}
+];
+function buildAlerts(){
+  const w=document.getElementById('alertList');w.innerHTML='';
+  ALERTS.forEach(a=>{
+    const el=document.createElement('div');el.className='alert-row glass';
+    el.innerHTML=`<span class="sev sev-${a.sev}"></span>
+      <span class="ico">${a.ico}</span>
+      <div class="abody"><div class="atitle">${a.title}</div><div class="ameta">${a.meta}</div></div>
+      <span class="atag tag-${a.sev}">${a.tag}</span>`;
+    w.appendChild(el);
+  });
+}
+
+/* ===================== NETWORK MAP ===================== */
+const NODES=[
+  // plants
+  {id:'P-A',type:'Plant',label:'Plant A',x:22,y:11,sz:34,ic:'&#127981;',stats:[['2','DCs supplied'],['98%','Yield'],['EU-W','Region']]},
+  {id:'P-B',type:'Plant',label:'Plant B',x:42,y:11,sz:34,ic:'&#127981;',stats:[['2','DCs supplied'],['96%','Yield'],['EU-C','Region']]},
+  {id:'P-C',type:'Plant',label:'Plant C',x:60,y:11,sz:34,ic:'&#127981;',stats:[['1','DC supplied'],['94%','Yield'],['EU-S','Region']]},
+  {id:'P-D',type:'Plant',label:'Plant D',x:78,y:11,sz:34,ic:'&#127981;',stats:[['1','DC supplied'],['97%','Yield'],['UK','Region']]},
+  // DCs
+  {id:'DC-1',type:'DC',label:'DC-1',x:14,y:46,sz:40,ic:'&#127970;',stats:[['91%','OTIF'],['4.6d','Lead time'],['Dublin','Hub']]},
+  {id:'DC-2',type:'DC',label:'DC-2',x:30,y:46,sz:40,ic:'&#127970;',stats:[['85%','OTIF'],['5.1d','Lead time'],['Cork','Hub']]},
+  {id:'DC-3',type:'DC',label:'DC-3',x:46,y:46,sz:46,ic:'&#9888;',stats:[['68%','OTIF'],['6.1d','Lead time'],['Midlands','Hub']]},
+  {id:'DC-4',type:'DC',label:'DC-4',x:62,y:46,sz:40,ic:'&#127970;',stats:[['83%','OTIF'],['5.3d','Lead time'],['Galway','Hub']]},
+  {id:'DC-5',type:'DC',label:'DC-5',x:78,y:46,sz:40,ic:'&#127970;',stats:[['80%','OTIF'],['5.6d','Lead time'],['Limerick','Hub']]},
+  {id:'DC-6',type:'DC',label:'DC-6',x:90,y:46,sz:40,ic:'&#127970;',stats:[['88%','OTIF'],['4.9d','Lead time'],['Belfast','Hub']]},
+  // customer regions
+  {id:'R1',type:'Region',label:'EU-West',x:25,y:84,sz:30,ic:'&#127757;',stats:[['6','Countries'],['94%','Fill rate'],['High','Demand']]},
+  {id:'R2',type:'Region',label:'EU-Central',x:45,y:84,sz:30,ic:'&#127757;',stats:[['7','Countries'],['91%','Fill rate'],['Med','Demand']]},
+  {id:'R3',type:'Region',label:'EU-South',x:65,y:84,sz:30,ic:'&#127757;',stats:[['5','Countries'],['88%','Fill rate'],['Rising','Demand']]},
+  {id:'R4',type:'Region',label:'UK&I',x:83,y:84,sz:30,ic:'&#127757;',stats:[['4','Countries'],['93%','Fill rate'],['High','Demand']]}
+];
+let selNode='DC-3';
+function nodeColor(t){const p=pal();return t==='Plant'?p.accent2:t==='DC'?p.accent:p.green;}
+function buildMap(){
+  const map=document.getElementById('netmap');
+  // clear nodes (keep tier labels)
+  [...map.querySelectorAll('.nm-node')].forEach(n=>n.remove());
+  NODES.forEach(n=>{
+    const el=document.createElement('div');
+    el.className='nm-node'+(n.id===selNode?' sel':'');el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-label',n.label+' '+n.type);el.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();el.click();}};
+    el.style.left=n.x+'%';el.style.top=n.y+'%';
+    const col=n.id==='DC-3'?pal().red:nodeColor(n.type);
+    el.innerHTML=`<div class="nm-dot" style="--sz:${n.sz}px;background:${col}">${n.ic}</div><div class="nm-lbl">${n.label}</div>`;
+    el.onclick=()=>{selNode=n.id;renderNode();buildMap();};
+    map.appendChild(el);
+  });
+  renderNode();
+}
+function renderNode(){
+  const n=NODES.find(x=>x.id===selNode);if(!n)return;
+  document.getElementById('nmName').textContent=n.label+'  ('+n.type+')';
+  document.getElementById('nmStats').innerHTML=n.stats.map(s=>`<div class="s"><div class="v">${s[0]}</div><div class="k">${s[1]}</div></div>`).join('');
+}
+
+/* ===================== KPI GLOSSARY ===================== */
+const GLOSSARY=[
+  {nm:'OTIF',target:'Target &ge; 95%',def:'On-Time-In-Full. The share of orders delivered both by the promised date and complete, with no shortfall. The headline service metric of the network.',fx:'OTIF orders / total orders',imp:'The single number a customer feels. Drives SLA penalties and contract renewals.',own:'Operations Director'},
+  {nm:'On-Time %',target:'Target &ge; 97%',def:'Share of orders where the actual ship or delivery date met the scheduled date. One of the two components of OTIF.',fx:'On-time orders / total orders',imp:'Isolates the timeliness half of service from completeness.',own:'Logistics Manager'},
+  {nm:'In-Full %',target:'Target &ge; 98%',def:'Share of orders delivered complete, with every line and unit fulfilled. The second component of OTIF.',fx:'Complete orders / total orders',imp:'Links service directly to inventory availability and fill rate.',own:'Inventory Planner'},
+  {nm:'Lead Time',target:'Target &le; 5.0d',def:'Average elapsed time from order placement to delivery, measured in days across the relevant scope.',fx:'mean(deliver_date &minus; order_date)',imp:'Sets customer expectations and working-capital needs. Speed without reliability is not enough.',own:'Logistics Manager'},
+  {nm:'Lead-Time Variance',target:'Target &le; 1.2x',def:'The spread of transit times around the mean, expressed relative to the network. High variance means a lane cannot be promised even if its average is acceptable.',fx:'stddev(transit_days), indexed to network',imp:'The metric that actually breaks SLAs. A reliable slow lane beats an erratic fast one.',own:'Operations Analyst'},
+  {nm:'Perfect Order Rate',target:'Target &ge; 90%',def:'Share of orders delivered on time, in full, damage-free and with correct documentation. The strictest service standard.',fx:'Perfect orders / total orders',imp:'The executive gold standard; exposes failures the looser metrics hide.',own:'Operations Director'},
+  {nm:'Fill Rate',target:'Target &ge; 97%',def:'Share of demanded units shipped from available stock without backorder.',fx:'Units shipped / units ordered',imp:'Connects service performance to inventory policy and safety stock.',own:'Inventory Planner'},
+  {nm:'Cost-to-Serve',target:'Monitor',def:'The fully-loaded operational margin retained after warehouse, freight, labour and returns cost of fulfilling an order or lane.',fx:'Profit / sales, by lane or DC',imp:'Translates operational performance into money; where a director looks for margin leaks.',own:'Finance Business Partner'},
+  {nm:'Open Exceptions',target:'Trend down',def:'Count of orders currently breaching one or more SLA thresholds and awaiting resolution.',fx:'count(orders where SLA flag = 1)',imp:'The live workload of the control tower; concentration by DC reveals structural issues.',own:'Operations Analyst'}
+];
+function buildGlossary(){
+  const w=document.getElementById('glossaryList');w.innerHTML='';
+  GLOSSARY.forEach(k=>{
+    const el=document.createElement('div');el.className='kpi-card glass';
+    el.innerHTML=`<div class="kc-top"><h3 class="sora">${k.nm}</h3><span class="kc-target">${k.target}</span></div>
+      <div class="kc-def">${k.def}</div>
+      <div class="kc-grid">
+        <div class="kc-cell"><div class="l">Formula</div><div class="v fx">${k.fx}</div></div>
+        <div class="kc-cell"><div class="l">Why it matters</div><div class="v">${k.imp}</div></div>
+        <div class="kc-cell"><div class="l">Owner</div><div class="v">${k.own}</div></div>
+      </div>`;
+    w.appendChild(el);
+  });
+}
+
+/* ===================== COUNT-UP ENGINE ===================== */
+function runCountUps(scope){
+  const els=(scope||document).querySelectorAll('[data-count]');
+  els.forEach(el=>{
+    if(el.dataset.done)return;
+    const target=parseFloat(el.dataset.count), dec=parseInt(el.dataset.dec||'0'), comma=el.dataset.comma;
+    const dur=720, t0=performance.now();
+    const fmt=v=>{let n=dec?v.toFixed(dec):Math.round(v).toString();
+      if(comma)n=Number(n).toLocaleString('en-US');return n;};
+    function step(now){
+      const p=Math.min(1,(now-t0)/dur);
+      const e=1-Math.pow(1-p,3); // easeOutCubic
+      el.textContent=fmt(target*e);
+      if(p<1)requestAnimationFrame(step); else {el.textContent=fmt(target);el.dataset.done='1';}
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* ===================== SKELETON ORCHESTRATION ===================== */
+function withSkeleton(paneId,build){
+  const pane=document.getElementById(paneId);
+  const boxes=pane.querySelectorAll('.cbox');
+  boxes.forEach(b=>b.classList.add('loading'));
+  // let the shimmer show briefly, then mount charts (feels like a fetch)
+  setTimeout(()=>{build();boxes.forEach(b=>b.classList.remove('loading'));},340);
+
+}
+
+/* ===== APP SHELL LOGIC ===== */
+function goView(view){
+  document.querySelectorAll('.sb-item').forEach(x=>x.classList.toggle('on',x.dataset.view===view));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  const el=document.getElementById(view);if(el)el.classList.add('on');
+  const labels={home:'Briefing',overview:'Business',pulse:'Network Pulse',alerts:'Alerts',network:'DC Explorer',map:'Network Map',leadtime:'Lead Time',exceptions:'Exceptions',scenario:'Scenario Engine',risk:'Risk Heatmap',glossary:'KPI Glossary',exec:'Executive Brief'};
+  document.getElementById('crumb').textContent=labels[view]||view;
+  document.getElementById('content').scrollTop=0;
+  closeSidebar();
+  buildView(view);
+}
+document.querySelectorAll('.sb-item').forEach(b=>b.onclick=()=>goView(b.dataset.view));
+
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('backdrop').classList.add('show');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('backdrop').classList.remove('show');}
+
+/* theme */
+let darkOn=false;
+document.getElementById('themeBtn').onclick=()=>{
+  darkOn=!darkOn;document.body.classList.toggle('dark',darkOn);
+  document.getElementById('themeIcon').innerHTML=darkOn
+    ?'<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>'
+    :'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  const active=document.querySelector('.view.on');if(active)buildView(active.id);
+};
+
+/* clock */
+function tick(){const t=new Date();const hh=String(t.getHours()).padStart(2,'0'),mm=String(t.getMinutes()).padStart(2,'0');
+  const c=document.getElementById('tbClock');if(c)c.textContent='LIVE · '+hh+':'+mm;}
+tick();setInterval(tick,30000);
+
+/* search shortcut */
+document.addEventListener('keydown',e=>{if(e.key==='/'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();const s=document.querySelector('.tb-search input');if(s)s.focus();}});
+
+/* per-view builder dispatch */
+function buildView(view){
+  // clear any live charts to avoid canvas reuse when re-entering or toggling theme
+  Object.keys(charts).forEach(k=>{try{charts[k].destroy();}catch(e){}delete charts[k];});
+  if(view==='home'){withSkeleton('home',buildHome);}
+  if(view==='pulse'){withSkeleton('pulse',buildPulse);runCountUps(document.getElementById('pulse'));}
+  if(view==='alerts')buildAlerts();
+  if(view==='network'){buildDcList();renderDc();buildCarrier();}
+  if(view==='map')buildMap();
+  if(view==='leadtime')withSkeleton('leadtime',buildLead);
+  if(view==='exceptions')withSkeleton('exceptions',buildExc);
+  if(view==='scenario'){buildSceChips();sceRecompute();}
+  if(view==='risk')buildHeat();
+  if(view==='glossary')buildGlossary();
+  if(view==='exec')runCountUps(document.getElementById('exec'));
+}
+
+['sDemand','sShock','sBuffer'].forEach(id=>{const e=document.getElementById(id);if(e)e.oninput=sceRecompute;});
+
+/* init */
+buildView('home');
+</script>
+</body>
+</html>
